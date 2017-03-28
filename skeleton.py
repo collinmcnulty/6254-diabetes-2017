@@ -40,4 +40,3 @@ verification_x, verification_y = separate_target(training, target_column)
 
 # rf = sklearn.ensemble.RandomForestClassifier()
 # rf.fit(training_x, training_y)
-1
