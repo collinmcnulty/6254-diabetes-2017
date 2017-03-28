@@ -2,8 +2,6 @@ import pandas as pd
 import numpy as np
 import sklearn.ensemble
 
-
-
 # Import data. Changed '?' to NaN
 datafile = 'dataset_diabetes/diabetic_data.csv'
 #datafile = 'test.csv'
@@ -38,5 +36,8 @@ training_x, training_y = separate_target(training, target_column)
 testing_x, testing_y = separate_target(testing, target_column)
 verification_x, verification_y = separate_target(training, target_column)
 
+
+
+# Write ML stuff here
 # rf = sklearn.ensemble.RandomForestClassifier()
 # rf.fit(training_x, training_y)
