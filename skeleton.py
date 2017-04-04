@@ -13,6 +13,7 @@ def clean_separate(datafile):
     # Split into training, verification and test sets
     fraction = {"training": 0.7, "verification": .05}
     target_column = 'readmitted_NO'
+    related_columns = ['readmitted_<30', 'readmitted_>30']
     
     cutoffs = []
     cutoffs.append(int(len(raw_data) * fraction["training"]))
@@ -28,6 +29,16 @@ def clean_separate(datafile):
         target = df[target_name]
         return train, target
     
+    def remove_related_targets(df):
+        df_out = df.copy()
+        for col in related_columns: 
+            df_out = df_out.drop(col, axis=1)
+        return df_out
+    
+    training = remove_related_targets(training)
+    testing = remove_related_targets(testing)
+    verification = remove_related_targets(verification)
+    
     training_x, training_y = separate_target(training, target_column)
     testing_x, testing_y = separate_target(testing, target_column)
     verification_x, verification_y = separate_target(verification, target_column)
@@ -38,10 +49,11 @@ def ml_fit(training_x, training_y, verification_x, verification_y):
     log_C = np.arange(0.01, 1.0, 0.1)
     score_vals=[]
     for C in log_C: 
-        log_model = sklearn.linear_model.LogisticRegression(solver='newton-cg',C=C, max_iter=1000)
+        log_model = sklearn.linear_model.LogisticRegression(solver='newton-cg',C=C)
         log_model = log_model.fit(training_x.as_matrix(), training_y.as_matrix())
         curr_score = log_model.score(verification_x.as_matrix(), verification_y.as_matrix())
         score_vals.append(curr_score)
+        print log_model.n_iter_
         print curr_score
         
     logr_optimal_C = log_C[np.argmax(score_vals)]
@@ -82,7 +94,7 @@ def ml_fit(training_x, training_y, verification_x, verification_y):
     lasso_optimal_score = np.max(score_vals)
     print "LASSO alpha = %.2f score = %.10f" %(lasso_optimal_alpha, lasso_optimal_score)
     
-    return log_model, linR_model, ridge_model, lasso_model
+    return log_model, lsq_model, ridge_model, lasso_model
     
 def ml_predict(testing_x, testing_y, log_model, lsq_model, ridge_model, lasso_model): 
     # Logistic Regression
