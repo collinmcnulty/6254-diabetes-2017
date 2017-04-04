@@ -4,8 +4,10 @@ import sklearn.ensemble
 from sklearn.linear_model import LogisticRegression, Ridge, Lasso, LinearRegression
 
 def clean_separate(datafile): 
-    # Read in datafile 
-    raw_data = pd.read_csv(datafile, index_col=0, na_values='?', low_memory=False)
+    # Read in datafile, sort based on patient number, remove duplicate patient entries 
+    raw_data = pd.read_csv(datafile, index_col=1, header=0, na_values='?', low_memory=False)
+    raw_data = raw_data.sort_index()
+    raw_data = raw_data[~raw_data.index.duplicated(keep='first')]
     raw_data = pd.get_dummies(raw_data) # switch to one-hot encoding
     
     # Split into training, verification and test sets
@@ -42,7 +44,7 @@ def ml_fit(training_x, training_y, verification_x, verification_y):
         score_vals.append(curr_score)
         print curr_score
         
-    logr_optimal_C = log_C[np.argmax[score_vals]]
+    logr_optimal_C = log_C[np.argmax(score_vals)]
     logr_optimal_score = np.max(score_vals)
     print "Logistic Regression C = %.2f score = %.4f" %(logr_optimal_C, logr_optimal_score)
     
