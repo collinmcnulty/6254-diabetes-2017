@@ -1,7 +1,10 @@
 import pandas as pd
 import numpy as np
+import scipy
 import sklearn.ensemble
 from sklearn.linear_model import LogisticRegression, Ridge, Lasso, LinearRegression
+from scipy import stats
+from sklearn.ensemble import RandomForestRegressor
 
 def clean_separate(datafile): 
     # Read in datafile, sort based on patient number, remove duplicate patient entries 
@@ -67,7 +70,7 @@ def ml_fit(training_x, training_y, verification_x, verification_y):
     print "Least Squares Regression score = %.4f" %(score)
     
     # Ridge Regression 
-    ridge_alpha = np.arange(0.01, 10, 0.2)
+    ridge_alpha = np.arange(1, 10, 0.2)
     score_vals = []
     for alpha in ridge_alpha: 
         ridge_model = sklearn.linear_model.Ridge(alpha=alpha)
@@ -97,34 +100,89 @@ def ml_fit(training_x, training_y, verification_x, verification_y):
     return log_model, lsq_model, ridge_model, lasso_model
     
 def ml_predict(testing_x, testing_y, log_model, lsq_model, ridge_model, lasso_model): 
+    def get_t_statistic(model, y_predicted, x_testing, y_testing):
+        n, k = x_testing.shape;
+        yhat = np.matrix(y_predicted).T
+        df = (n-k-1)
+        sse = np.sum((y_predicted - y_testing) ** 2, axis=0) / float(x_testing.shape[0] - x_testing.shape[1])
+
+        se = np.zeros(sse.shape);
+        print sse.shape
+ 
+        for i in range(sse.shape):
+            se[i] = np.sqrt(np.diagonal(sse[i] * np.linalg.inv(np.dot(x_testing.T, x_testing))))
+        model.sampleVariance = sse/df;
+        model.sampleVarianceX = np.dot(x_testing.T, x_testing);
+        model.covarianceMatrix = scipy.linalg.sqrtm(model.sampleVariance*model.sampleVarianceX)
+        model.se = model.covarianceMatrix.diagonal()[0:]
+        model.betasTStat = np.zeros(len(model.se))
+        #for i in xrange(len(model.se)):
+        model.betasTStat = model.coef_/model.se
+        
+        model.betasPValue = 1 - stats.t.cdf(abs(model.betasTStat),df)
+        return model.betasPValue
     # Logistic Regression
     log_predicted_y = log_model.predict(testing_x.as_matrix())
     log_score = log_model.score(testing_x.as_matrix(), testing_y.as_matrix())
-    
+    log_t_stat = get_t_statistic(log_model, log_predicted_y, testing_x.as_matrix(), testing_y.as_matrix())
+    print log_t_stat
     # Least Squares Regression 
     lsq_predicted_y = lsq_model.predict(testing_x.as_matrix())
     lsq_score = lsq_model.score(testing_x.as_matrix(), testing_y.as_matrix())
-    
+    lsq_t_stat = get_t_statistic(lsq_model, lsq_predicted_y, testing_x.as_matrix(), testing_y.as_matrix())
+    print lsq_t_stat
     # Ridge Regression 
     ridge_predicted_y = ridge_model.predict(testing_x.as_matrix())
     ridge_score = ridge_model.score(testing_x.as_matrix(), testing_y.as_matrix())
-    
+    ridge_t_stat = get_t_statistic(ridge_model, ridge_predicted_y, testing_x.as_matrix(), testing_y.as_matrix())
+    print ridge_t_stat
     # Lasso 
     lasso_predicted_y = lasso_model.predict(testing_x.as_matrix())
     lasso_score = lasso_model.score(testing_x.as_matrix(), testing_y.as_matrix())
-    
+    lasso_t_stat = get_t_statistic(lasso_model, lasso_predicted_y, testing_x.as_matrix(), testing_y.as_matrix())
+    print lasso_t_stat
     print "Logistic Regression score = %.10f" % log_score
     print "Least Squares Regression score = %.10f" % lsq_score
     print "Ridge Regression score = %.10f" % ridge_score 
     print "LASSO Regression score = %.10f" % lasso_score
-
+    
+    def find_best_classifier(log_model, log_score, lsq_model, lsq_score, ridge_model, ridge_score, lasso_model, lasso_score):
+        classifiers = ([log_model, lsq_model, ridge_model, lasso_model]);
+        scores = ([log_score, lsq_score, ridge_score, lasso_score]);
+        best_classifier = classifiers[np.argmax(scores)];
+        print best_classifier
+        return best_classifier;
+    find_best_classifier(log_model, log_score, lsq_model, lsq_score, ridge_model, ridge_score, lasso_model, lasso_score);
+    return best_classifier;
+    
+def random_forest_feature_importance(X, Y):
+    rf = RandomForestRegressor()
+    rf.fit(X, Y);
+    importances = rf.feature_importances_
+    indices = np.nonzero(importances)
+    nonzero_importances = importances[indices]
+    return indices, nonzero_importances;
+    
 datafile = 'dataset_diabetes/diabetic_data.csv'
 training_x, training_y, testing_x, testing_y, verification_x, verification_y = clean_separate(datafile)
+
+indices, importances = random_forest_feature_importance(testing_x, testing_y);
 # do machine learning
 log_model, lsq_model, ridge_model, lasso_model = ml_fit(training_x, training_y, verification_x, verification_y)
-ml_predict(testing_x, testing_y, log_model, lsq_model, ridge_model, lasso_model)
-
+best_classifier = ml_predict(testing_x, testing_y, log_model, lsq_model, ridge_model, lasso_model)
+best_classifier = find_best_classifier(log_model, log_score, lsq_model, lsq_score, ridge_model, ridge_score, lasso_model, lasso_score);
 # TODO: Clean up input data, tune parameters of models, create plots/visuals of results
 # write out results and plot 
-    
+
+#==============================================================================
+#     
+# def feature_importance(best_classifier, ):  
+#     importances = best_classifier.feature_importances_
+#     std = np.std([tree.feature_importances_ for tree in best_classifier.estimators_],
+#              axis=0)
+#     indices = np.argsort(importances)[::-1]
+#     print("Feature ranking:")
+#     for f in range(X.shape[1]):
+#     print("%d. feature %d (%f)" % (f + 1, indices[f], importances[indices[f]]))
+#==============================================================================
 
