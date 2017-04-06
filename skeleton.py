@@ -5,6 +5,7 @@ import sklearn.ensemble
 from sklearn.linear_model import LogisticRegression, Ridge, Lasso, LinearRegression
 from scipy import stats
 from sklearn.ensemble import RandomForestRegressor
+import matplotlib.pyplot as plt
 
 def clean_separate(datafile): 
     # Read in datafile, sort based on patient number, remove duplicate patient entries 
@@ -156,9 +157,18 @@ def ml_predict(testing_x, testing_y, log_model, lsq_model, ridge_model, lasso_mo
     return best_classifier;
     
 def random_forest_feature_importance(X, Y):
+    def plot_feature_importance(importances, testing_x, testing_y):
+    # Plot the feature importances of the forest
+        plt.figure()
+        plt.title("Feature importances")
+        plt.bar(range(testing_x.shape[1]), importances, color="r", align="center")
+        plt.xticks(range(testing_x.shape[1]))
+        plt.xlim([-1, testing_x.shape[1]])
+        plt.show()
     rf = RandomForestRegressor()
     rf.fit(X, Y);
     importances = rf.feature_importances_
+    plot_feature_importance(importances, X, Y)
     indices = np.nonzero(importances)
     nonzero_importances = importances[indices]
     return indices, nonzero_importances;
@@ -167,6 +177,14 @@ datafile = 'dataset_diabetes/diabetic_data.csv'
 training_x, training_y, testing_x, testing_y, verification_x, verification_y = clean_separate(datafile)
 
 indices, importances = random_forest_feature_importance(testing_x, testing_y);
+##TODO HELPPPPPPPP
+newsize = len(indices)
+updatedx = np.zeros((testing_x.shape[0], newsize));
+for i in range(newsize):
+    updatedx[:, i] = testing_x[:, indices[i]];
+updatedx = testing_x[:, indices[0]];
+
+
 # do machine learning
 log_model, lsq_model, ridge_model, lasso_model = ml_fit(training_x, training_y, verification_x, verification_y)
 best_classifier = ml_predict(testing_x, testing_y, log_model, lsq_model, ridge_model, lasso_model)
