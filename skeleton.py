@@ -4,7 +4,7 @@ import sklearn.ensemble
 import sklearn.preprocessing
 from sklearn.linear_model import LogisticRegression, Ridge, Lasso, LinearRegression
 import matplotlib.pyplot as plt
-
+import statsmodels.api as sm
 def clean_separate(datafile): 
     # Read in datafile, sort based on patient number, remove duplicate patient entries 
     raw_data = pd.read_csv(datafile, index_col=1, header=0, na_values='?', low_memory=False)
@@ -104,21 +104,49 @@ def ml_fit(training_x, training_y, verification_x, verification_y):
     return log_model, lsq_model, ridge_model, lasso_model
     
 def ml_predict(testing_x, testing_y, log_model, lsq_model, ridge_model, lasso_model): 
+
     # Logistic Regression
     log_predicted_y = log_model.predict(testing_x.as_matrix())
     log_score = log_model.score(testing_x.as_matrix(), testing_y.as_matrix())
-    
+    plt.figure()
+    actual_y = plt.plot(testing_x, testing_y, "bo", label='Actual Y')
+    predicted_y = plt.plot(testing_x, log_predicted_y, "rs", label='Predicted Y')
+    plt.legend(handles = [actual_y, predicted_y])
+    plt.title('Logistic Regression')
+    plt.xlabel('Feature')
+    plt.ylabel('Predicted and Actual Result')
+    axes = plt.gca()
+    axes.set_ylim([-0.5, 1.5])
+    plt.show()
     # Least Squares Regression 
     lsq_predicted_y = lsq_model.predict(testing_x.as_matrix())
     lsq_score = lsq_model.score(testing_x.as_matrix(), testing_y.as_matrix())
-    
+    plt.figure()
+    plt.plot(testing_x, testing_y, 'bo', testing_x, lsq_predicted_y, 'rs')
+    plt.title('Least Squares Regression')
+    plt.xlabel('Feature')
+    plt.ylabel('Predicted and Actual Result')
+    plt.show()
     # Ridge Regression 
     ridge_predicted_y = ridge_model.predict(testing_x.as_matrix())
     ridge_score = ridge_model.score(testing_x.as_matrix(), testing_y.as_matrix())
-    
+    plt.figure()
+    plt.plot(testing_x, testing_y, 'bo', testing_x, ridge_predicted_y, 'rs')
+    plt.title('Ridge Regression')
+    plt.xlabel('Feature')
+    plt.ylabel('Predicted and Actual Result')
+    plt.show()
     # Lasso 
     lasso_predicted_y = lasso_model.predict(testing_x.as_matrix())
     lasso_score = lasso_model.score(testing_x.as_matrix(), testing_y.as_matrix())
+    plt.figure()
+    plt.plot(testing_x, testing_y, 'bo', testing_x, lasso_predicted_y, 'rs')
+    plt.title('LASSO Regression')
+    plt.xlabel('Feature')
+    plt.ylabel('Predicted and Actual Result')
+    axes = plt.gca()
+    axes.set_ylim([-0.5, 1.5])
+    plt.show()
     
     print "Logistic Regression score = %.10f" % log_score
     print "Least Squares Regression score = %.10f" % lsq_score
@@ -135,40 +163,40 @@ def ml_predict(testing_x, testing_y, log_model, lsq_model, ridge_model, lasso_mo
     return find_best_classifier()
     
 def random_forest_feature_importance(X, Y):
-#    def plot_feature_importance(importances, testing_x, testing_y):
-#    # Plot the feature importances of the forest
-#        plt.figure()
-#        plt.title("Feature importances")
-#        plt.bar(range(testing_x.shape[1]), importances, color="r", align="center")
-#        plt.xticks(range(testing_x.shape[1]))
-#        plt.xlim([-1, testing_x.shape[1]])
-#        plt.show()
+    def plot_feature_importance(importances, testing_x, testing_y):
+    # Plot the feature importances of the forest
+        plt.figure()
+        plt.title("Feature importances")
+        plt.bar(range(testing_x.shape[1]), importances, color="r", align="center")
+        plt.xticks(range(testing_x.shape[1]))
+        plt.xlim([-1, testing_x.shape[1]])
+        plt.show()
     rf = sklearn.ensemble.RandomForestRegressor()
     rf.fit(X, Y)
     importances = rf.feature_importances_
-#    plot_feature_importance(importances, X, Y)
+    plot_feature_importance(importances, X, Y)
     indices = np.argsort(importances)
+    minimum_significance = 0.001    
+    #most_important = best_ordered_importances[best_ordered_importances > minimum_significance]
     ordered_importances = importances[indices]
-    minimum_significance = 0.001
     least_important = ordered_importances[ordered_importances < minimum_significance]
     least_important_indices = indices[ordered_importances < minimum_significance]
-    return least_important_indices, least_important
+    best_ordered_indices = np.argsort(importances)[::-1]
+    return least_important_indices, least_important, best_ordered_indices
     
 # Read in the datafile and clean it
 datafile = 'dataset_diabetes/diabetic_data.csv'
 training_x, training_y, testing_x, testing_y, verification_x, verification_y = clean_separate(datafile)
 
 # Extract the features of most importance
-indices, importances = random_forest_feature_importance(training_x, training_y)
+indices, importances, best_indices = random_forest_feature_importance(training_x, training_y)
 feature_list = list(training_x)
 testing_x = testing_x.drop(list(np.array(feature_list)[indices]), axis=1)
 verification_x = verification_x.drop(list(np.array(feature_list)[indices]), axis=1)
 training_x = training_x.drop(list(np.array(feature_list)[indices]), axis=1)
-
 # do machine learning
 log_model, lsq_model, ridge_model, lasso_model = ml_fit(training_x, training_y, verification_x, verification_y)
 best_classifier = ml_predict(testing_x, testing_y, log_model, lsq_model, ridge_model, lasso_model)
 # TODO:  tune parameters of models (ML models, standardization of data, and amount of features removed),
 #        create plots/visuals of results
-
 
