@@ -191,6 +191,8 @@ training_x, training_y, testing_x, testing_y, verification_x, verification_y = c
 # Extract the features of most importance
 indices, importances, best_indices = random_forest_feature_importance(training_x, training_y)
 feature_list = list(training_x)
+best_features = np.array(feature_list)[best_indices[0:10]]
+print best_features
 testing_x = testing_x.drop(list(np.array(feature_list)[indices]), axis=1)
 verification_x = verification_x.drop(list(np.array(feature_list)[indices]), axis=1)
 training_x = training_x.drop(list(np.array(feature_list)[indices]), axis=1)
