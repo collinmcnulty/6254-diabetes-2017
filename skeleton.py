@@ -172,6 +172,7 @@ def ml_predict(testing_x, testing_y, log_model, lsq_model, ridge_model, lasso_mo
     plt.xlabel('Subject')
     plt.ylabel('Non-Readmittance (1): Readmittance (0)')
     plt.legend([plt3, plt4], ['Actual Readmittance', 'Predicted Readmittance'])
+    axes = plt.gca()
     axes.set_ylim([-0.5, 1.5])
     plt.show()
     
@@ -185,6 +186,7 @@ def ml_predict(testing_x, testing_y, log_model, lsq_model, ridge_model, lasso_mo
     plt.xlabel('Subject')
     plt.ylabel('Non-Readmittance (1): Readmittance (0)')
     plt.legend([plt5, plt6], ['Actual Readmittance', 'Predicted Readmittance'])
+    axes = plt.gca()
     axes.set_ylim([-0.5, 1.5])
     plt.show()
     
