@@ -307,30 +307,21 @@ plt.show()
 full_data_x.plot(kind='density', subplots=True, layout=(2,3), sharex=False)
 plt.show()
 
-# plot scatter plots of features with most significance
-readmitted_indices = np.where(full_data_y == 0)
-not_readmitted_indices = np.where(full_data_y == 1)
-readmitted_1 = full_data_x['num_lab_procedures'][readmitted_indices[0]]
-readmitted_2 = full_data_x['num_medications'][readmitted_indices[0]]
-readmitted_3 = full_data_x['time_in_hospital'][readmitted_indices[0]]
-not_readmitted_1 = full_data_x['num_lab_procedures'][not_readmitted_indices[0]]
-not_readmitted_2 = full_data_x['num_medications'][not_readmitted_indices[0]]
-not_readmitted_3 = full_data_x['time_in_hospital'][not_readmitted_indices[0]]
-plt1 = pd.concat([readmitted_1, not_readmitted_1], axis=1)
-plt1.columns = ['Readmitted', 'Not-Readmitted']
-plt2 = pd.concat([readmitted_2, not_readmitted_2], axis=1)
-plt2.columns = ['Readmitted', 'Not-Readmitted']
-plt3 = pd.concat([readmitted_3, not_readmitted_3], axis=1)
-plt3.columns = ['Readmitted', 'Not-Readmitted']
-plt1.plot(kind='hist', alpha=0.5)
-plt.xlabel('Num Lab Procedures')
-plt.show()
-plt2.plot(kind='hist', alpha=0.5)
-plt.xlabel('Num Medications')
-plt.show()
-plt3.plot(kind='hist', alpha=0.5)
-plt.xlabel('Time In Hospital')
-plt.show()
+# plot histograms of features with most significance
+readmitted = full_data.loc[full_data['readmitted_NO'] == 0]
+not_readmitted = full_data.loc[full_data['readmitted_NO'] == 1]
+
+Lab_procedures = pd.concat([readmitted.num_lab_procedures, not_readmitted.num_lab_procedures], axis = 1)
+Lab_procedures.columns = ['Readmitted', 'Not-Readmitted']
+Lab_procedures.plot.hist(normed=True, alpha = 0.5)
+
+Num_medications = pd.concat([readmitted.num_medications, not_readmitted.num_medications], axis = 1)
+Num_medications.columns = ['Readmitted', 'Not-Readmitted']
+Num_medications.plot.hist(normed=True, alpha = 0.5)
+
+Hospital_time = pd.concat([readmitted.time_in_hospital, not_readmitted.time_in_hospital], axis = 1)
+Hospital_time.columns = ['Readmitted', 'Not-Readmitted']
+Hospital_time.plot.hist(normed=True, alpha = 0.5)
 
 # Extract the features of most importance
 indices, importances, best_indices = random_forest_feature_importance(training_x, training_y)
