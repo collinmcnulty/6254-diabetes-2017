@@ -64,12 +64,12 @@ def clean_separate(datafile):
 
 def ml_fit(training_x, training_y, verification_x, verification_y): 
     # Multi-variable logistic regression 
-    log_C = [0.01] #np.arange(1e-3, 1e-1, 1e-3)
+    log_C = np.arange(1e-3, 1e-1, 1e-3) #[0.01] np.arange(1e-3, 1e-1, 1e-3)
     score_vals=[]
     for C in log_C: 
         log_model = sklearn.linear_model.LogisticRegression(solver='newton-cg',C=C, max_iter=100)
-        log_model = log_model.fit(training_x.as_matrix(), training_y.as_matrix())
-        curr_score = log_model.score(verification_x.as_matrix(), verification_y.as_matrix())
+        log_model = log_model.fit(training_x, training_y)
+        curr_score = log_model.score(verification_x, verification_y)
         score_vals.append(curr_score)
         
     logr_optimal_C = log_C[np.argmax(score_vals)]
@@ -78,19 +78,19 @@ def ml_fit(training_x, training_y, verification_x, verification_y):
     
     # Least Squares Regression 
     lsq_model = sklearn.linear_model.LinearRegression()
-    lsq_model = lsq_model.fit(training_x.as_matrix(), training_y.as_matrix())
-    lsq_predicted_y = threshold(np.round(lsq_model.predict(verification_x.as_matrix())), 0, 1, 0)
-    curr_score = score(lsq_predicted_y, verification_y.as_matrix())
+    lsq_model = lsq_model.fit(training_x, training_y)
+    lsq_predicted_y = threshold(np.round(lsq_model.predict(verification_x)), 0, 1, 0)
+    curr_score = score(lsq_predicted_y, verification_y)
     print "Least Squares Regression score = %.10f" %(curr_score)
     
     # Ridge Regression 
-    ridge_alpha = [1e-9] #np.arange(1e-9, 1e-5, 1e-6)
+    ridge_alpha = np.arange(1e-9, 1e-5, 1e-6) #[1e-9] np.arange(1e-9, 1e-5, 1e-6)
     score_vals = []
     for alpha in ridge_alpha: 
         ridge_model = sklearn.linear_model.Ridge(alpha=alpha)
-        ridge_model = ridge_model.fit(training_x.as_matrix(), training_y.as_matrix())
-        ridge_predicted_y = threshold(np.round(ridge_model.predict(verification_x.as_matrix())),0, 1, 0)
-        curr_score = score(ridge_predicted_y, verification_y.as_matrix())
+        ridge_model = ridge_model.fit(training_x, training_y)
+        ridge_predicted_y = threshold(np.round(ridge_model.predict(verification_x)),0, 1, 0)
+        curr_score = score(ridge_predicted_y, verification_y)
         score_vals.append(curr_score)
         
     ridge_optimal_alpha = ridge_alpha[np.argmax(score_vals)]
@@ -98,13 +98,13 @@ def ml_fit(training_x, training_y, verification_x, verification_y):
     print "Ridge Regression alpha = %.10f score = %.10f" %(ridge_optimal_alpha, ridge_optimal_score)
     
     # LASSO 
-    lasso_alpha = [0.0001] #np.arange(0.0001, 0.1, 0.001)
+    lasso_alpha = np.arange(0.0001, 0.1, 0.001) #[0.0001] np.arange(0.0001, 0.1, 0.001)
     score_vals = []
     for alpha in lasso_alpha: 
         lasso_model = sklearn.linear_model.Lasso(alpha=alpha)
-        lasso_model = lasso_model.fit(training_x.as_matrix(), training_y.as_matrix())
-        lasso_predicted_y = threshold(np.round(threshold(lasso_model.predict(verification_x.as_matrix()), 0.65, 1, 0)), 0,1,0)
-        curr_score = score(lasso_predicted_y, verification_y.as_matrix())
+        lasso_model = lasso_model.fit(training_x, training_y)
+        lasso_predicted_y = threshold(np.round(threshold(lasso_model.predict(verification_x), 0.65, 1, 0)), 0,1,0)
+        curr_score = score(lasso_predicted_y, verification_y)
         score_vals.append(curr_score)
     
     lasso_optimal_alpha = lasso_alpha[np.argmax(score_vals)]
@@ -112,12 +112,12 @@ def ml_fit(training_x, training_y, verification_x, verification_y):
     print "LASSO alpha = %.4f score = %.10f" %(lasso_optimal_alpha, lasso_optimal_score)
     
     # Knn
-    knn_k = [9] #np.arange(7, 20, 1)
+    knn_k = np.arange(7, 20, 1) #[9] np.arange(7, 20, 1)
     score_vals = []
     for k in knn_k: 
         knn_model = sklearn.neighbors.KNeighborsClassifier(n_neighbors=k)
-        knn_model = knn_model.fit(training_x.as_matrix(), training_y.as_matrix())
-        curr_score = knn_model.score(verification_x.as_matrix(), verification_y.as_matrix())
+        knn_model = knn_model.fit(training_x, training_y)
+        curr_score = knn_model.score(verification_x, verification_y)
         score_vals.append(curr_score)
     
     knn_optimal_k = knn_k[np.argmax(score_vals)]
@@ -125,7 +125,7 @@ def ml_fit(training_x, training_y, verification_x, verification_y):
     print "Knn k = %d score = %.10f" %(knn_optimal_k, knn_optimal_score)
       
     #SVC
-    svc_c = [4] #np.arange(1 , 5, 0.5) # 0.001
+    svc_c = np.arange(1 , 5, 0.5) #[4] np.arange(1 , 5, 0.5) # 0.001
     svc_gamma = [1/float(len(training_x))]#np.arange(1e-9, 1e-3, 1e-3)
     score_vals = []
     svc_c_comb =[]
@@ -133,8 +133,8 @@ def ml_fit(training_x, training_y, verification_x, verification_y):
     for c in svc_c: 
         for gamma in svc_gamma: 
             svc_model = sklearn.svm.SVC(C=c, gamma=gamma, kernel='poly',degree=1, coef0=1.0)
-            svc_model = svc_model.fit(training_x.as_matrix(), training_y.as_matrix())
-            curr_score = svc_model.score(verification_x.as_matrix(), verification_y.as_matrix())
+            svc_model = svc_model.fit(training_x, training_y)
+            curr_score = svc_model.score(verification_x, verification_y)
             svc_c_comb.append(c)
             svc_gamma_comb.append(gamma)
             score_vals.append(curr_score)
@@ -146,91 +146,97 @@ def ml_fit(training_x, training_y, verification_x, verification_y):
     
     return log_model, lsq_model, ridge_model, lasso_model, knn_model, svc_model
     
-def ml_predict(testing_x, testing_y, log_model, lsq_model, ridge_model, lasso_model, knn_model, svc_model): 
+def ml_predict(testing_x, testing_y, log_model, lsq_model, ridge_model, lasso_model, knn_model, svc_model, plotting=True): 
 
     # Logistic Regression
-    log_predicted_y = log_model.predict(testing_x.as_matrix())
-    log_score = log_model.score(testing_x.as_matrix(), testing_y.as_matrix())
-    plt.figure()
-    plt1, = plt.plot(testing_x.index, testing_y, "bo", alpha=0.5)
-    plt2, = plt.plot(testing_x.index, log_predicted_y, "rs", alpha=0.5)
-    plt.title('Logistic Regression')
-    plt.xlabel('Subject')
-    plt.ylabel('Non-Readmittance (1): Readmittance (0)')
-    plt.legend([plt1, plt2], ['Actual Readmittance', 'Predicted Readmittance'])
-    axes = plt.gca()
-    axes.set_ylim([-0.5, 1.5])
-    plt.show()
+    log_predicted_y = log_model.predict(testing_x)
+    log_score = log_model.score(testing_x, testing_y)
+    if plotting: 
+        plt.figure()
+        plt1, = plt.plot(testing_x.index, testing_y, "bo", alpha=0.5)
+        plt2, = plt.plot(testing_x.index, log_predicted_y, "rs", alpha=0.5)
+        plt.title('Logistic Regression')
+        plt.xlabel('Subject')
+        plt.ylabel('Non-Readmittance (1): Readmittance (0)')
+        plt.legend([plt1, plt2], ['Actual Readmittance', 'Predicted Readmittance'])
+        axes = plt.gca()
+        axes.set_ylim([-0.5, 1.5])
+        plt.show()
     
     # Least Squares Regression 
-    lsq_predicted_y = threshold(np.round(lsq_model.predict(testing_x.as_matrix())), 0, 1, 0)
-    lsq_score = score(lsq_predicted_y,testing_y.as_matrix())
-    plt.figure()
-    plt3, = plt.plot(testing_x.index, testing_y, 'bo', alpha=0.5)
-    plt4, = plt.plot(testing_x.index, lsq_predicted_y, 'rs', alpha=0.5)
-    plt.title('Least Squares Regression')
-    plt.xlabel('Subject')
-    plt.ylabel('Non-Readmittance (1): Readmittance (0)')
-    plt.legend([plt3, plt4], ['Actual Readmittance', 'Predicted Readmittance'])
-    axes = plt.gca()
-    axes.set_ylim([-0.5, 1.5])
-    plt.show()
+    lsq_predicted_y = threshold(np.round(lsq_model.predict(testing_x)), 0, 1, 0)
+    lsq_score = score(lsq_predicted_y,testing_y)
+    if plotting: 
+        plt.figure()
+        plt3, = plt.plot(testing_x.index, testing_y, 'bo', alpha=0.5)
+        plt4, = plt.plot(testing_x.index, lsq_predicted_y, 'rs', alpha=0.5)
+        plt.title('Least Squares Regression')
+        plt.xlabel('Subject')
+        plt.ylabel('Non-Readmittance (1): Readmittance (0)')
+        plt.legend([plt3, plt4], ['Actual Readmittance', 'Predicted Readmittance'])
+        axes = plt.gca()
+        axes.set_ylim([-0.5, 1.5])
+        plt.show()
     
     # Ridge Regression 
-    ridge_predicted_y = threshold(np.round(ridge_model.predict(testing_x.as_matrix())), 0, 1, 0)
-    ridge_score = score(ridge_predicted_y, testing_y.as_matrix())
-    plt.figure()
-    plt5, = plt.plot(testing_x.index, testing_y, 'bo', alpha=0.5)
-    plt6, = plt.plot(testing_x.index, ridge_predicted_y, 'rs', alpha=0.5)
-    plt.title('Ridge Regression')
-    plt.xlabel('Subject')
-    plt.ylabel('Non-Readmittance (1): Readmittance (0)')
-    plt.legend([plt5, plt6], ['Actual Readmittance', 'Predicted Readmittance'])
-    axes = plt.gca()
-    axes.set_ylim([-0.5, 1.5])
-    plt.show()
+    ridge_predicted_y = threshold(np.round(ridge_model.predict(testing_x)), 0, 1, 0)
+    ridge_score = score(ridge_predicted_y, testing_y)
+    if plotting: 
+        plt.figure()
+        plt5, = plt.plot(testing_x.index, testing_y, 'bo', alpha=0.5)
+        plt6, = plt.plot(testing_x.index, ridge_predicted_y, 'rs', alpha=0.5)
+        plt.title('Ridge Regression')
+        plt.xlabel('Subject')
+        plt.ylabel('Non-Readmittance (1): Readmittance (0)')
+        plt.legend([plt5, plt6], ['Actual Readmittance', 'Predicted Readmittance'])
+        axes = plt.gca()
+        axes.set_ylim([-0.5, 1.5])
+        plt.show()
     
     # Lasso 
-    lasso_predicted_y = threshold(np.round(threshold(lasso_model.predict(testing_x.as_matrix()), 0.65, 1, 0)), 0, 1, 0)
-    lasso_score = score(lasso_predicted_y, testing_y.as_matrix())
-    plt.figure()
-    plt7, = plt.plot(testing_x.index, testing_y, 'bo', alpha=0.5)
-    plt8, = plt.plot(testing_x.index, lasso_predicted_y, 'rs', alpha=0.5)
-    plt.title('LASSO Regression')
-    plt.xlabel('Subject')
-    plt.ylabel('Non-Readmittance (1): Readmittance (0)')
-    plt.legend([plt7, plt8], ['Actual Readmittance', 'Predicted Readmittance'])
-    axes = plt.gca()
-    axes.set_ylim([-0.5, 1.5])
-    plt.show()
+    lasso_predicted_y = threshold(np.round(threshold(lasso_model.predict(testing_x), 0.65, 1, 0)), 0, 1, 0)
+    lasso_score = score(lasso_predicted_y, testing_y)
+    if plotting: 
+        plt.figure()
+        plt7, = plt.plot(testing_x.index, testing_y, 'bo', alpha=0.5)
+        plt8, = plt.plot(testing_x.index, lasso_predicted_y, 'rs', alpha=0.5)
+        plt.title('LASSO Regression')
+        plt.xlabel('Subject')
+        plt.ylabel('Non-Readmittance (1): Readmittance (0)')
+        plt.legend([plt7, plt8], ['Actual Readmittance', 'Predicted Readmittance'])
+        axes = plt.gca()
+        axes.set_ylim([-0.5, 1.5])
+        plt.show()
 
     # K-nn
-    knn_predicted_y = knn_model.predict(testing_x.as_matrix())
-    knn_score = knn_model.score(testing_x.as_matrix(), testing_y.as_matrix())
-    plt.figure()
-    plt9, = plt.plot(testing_x.index, testing_y, 'bo', alpha=0.5)
-    plt10, = plt.plot(testing_x.index, knn_predicted_y, 'rs', alpha=0.5)
-    plt.title('K-nn')
-    plt.xlabel('Subject')
-    plt.ylabel('Non-Readmittance (1): Readmittance (0)')
-    plt.legend([plt9, plt10], ['Actual Readmittance', 'Predicted Readmittance'])
-    axes = plt.gca()
-    axes.set_ylim([-0.5, 1.5])
-    plt.show()
+    knn_predicted_y = knn_model.predict(testing_x)
+    knn_score = knn_model.score(testing_x, testing_y)
+    if plotting: 
+        plt.figure()
+        plt9, = plt.plot(testing_x.index, testing_y, 'bo', alpha=0.5)
+        plt10, = plt.plot(testing_x.index, knn_predicted_y, 'rs', alpha=0.5)
+        plt.title('K-nn')
+        plt.xlabel('Subject')
+        plt.ylabel('Non-Readmittance (1): Readmittance (0)')
+        plt.legend([plt9, plt10], ['Actual Readmittance', 'Predicted Readmittance'])
+        axes = plt.gca()
+        axes.set_ylim([-0.5, 1.5])
+        plt.show()
     
     # SVC
-    svc_predicted_y = svc_model.predict(testing_x.as_matrix())
-    svc_score = svc_model.score(testing_x.as_matrix(), testing_y.as_matrix())
-    plt.figure()
-    plt11, = plt.plot(testing_x.index, testing_y, 'bo', alpha=0.5)
-    plt12, = plt.plot(testing_x.index, svc_predicted_y, 'rs', alpha=0.5)
-    plt.title('SVC')
-    plt.xlabel('Subject')
-    plt.ylabel('Non-Readmittance (1): Readmittance (0)')
-    plt.legend([plt11, plt12], ['Actual Readmittance', 'Predicted Readmittance'])
-    axes = plt.gca()
-    axes.set_ylim([-0.5, 1.5])
-    plt.show()
+    svc_predicted_y = svc_model.predict(testing_x)
+    svc_score = svc_model.score(testing_x, testing_y)
+    if plotting: 
+        plt.figure()
+        plt11, = plt.plot(testing_x.index, testing_y, 'bo', alpha=0.5)
+        plt12, = plt.plot(testing_x.index, svc_predicted_y, 'rs', alpha=0.5)
+        plt.title('SVC')
+        plt.xlabel('Subject')
+        plt.ylabel('Non-Readmittance (1): Readmittance (0)')
+        plt.legend([plt11, plt12], ['Actual Readmittance', 'Predicted Readmittance'])
+        axes = plt.gca()
+        axes.set_ylim([-0.5, 1.5])
+        plt.show()
     
     print "Logistic Regression score = %.10f" % log_score
     print "Least Squares Regression score = %.10f" % lsq_score
@@ -279,6 +285,10 @@ training_x, training_y, testing_x, testing_y, verification_x, verification_y = c
 
 # Plot the data 
 training_x2, training_y2, testing_x2, testing_y2, verification_x2, verification_y2 = clean_separate(datafile)
+a1c_training_x = training_x['A1Cresult_None'].copy()
+a1c_verification_x = verification_x['A1Cresult_None'].copy()
+a1c_testing_x = testing_x['A1Cresult_None'].copy()
+
 full_data_x = pd.concat([training_x2, testing_x2, verification_x2])
 full_data_y = pd.concat([training_y2, testing_y2, verification_y2])
 feature_list = list(training_x)
@@ -307,21 +317,51 @@ plt.show()
 full_data_x.plot(kind='density', subplots=True, layout=(2,3), sharex=False)
 plt.show()
 
-# plot histograms of features with most significance
-readmitted = full_data.loc[full_data['readmitted_NO'] == 0]
-not_readmitted = full_data.loc[full_data['readmitted_NO'] == 1]
+# plot bar plots of features with most significance
+readmitted_indices = np.where(full_data_y == 0)
+not_readmitted_indices = np.where(full_data_y == 1)
+readmitted_proc = pd.DataFrame(full_data_x['num_lab_procedures'].as_matrix()[readmitted_indices[0]], columns=['Readmitted'])
+readmitted_meds = pd.DataFrame(full_data_x['num_medications'].as_matrix()[readmitted_indices[0]], columns=['Readmitted'])
+readmitted_time = pd.DataFrame(full_data_x['time_in_hospital'].as_matrix()[readmitted_indices[0]], columns=['Readmitted'])
+not_readmitted_proc = pd.DataFrame(full_data_x['num_lab_procedures'].as_matrix()[not_readmitted_indices[0]], columns=['Not Readmitted'])
+not_readmitted_meds = pd.DataFrame(full_data_x['num_medications'].as_matrix()[not_readmitted_indices[0]], columns=['Not Readmitted'])
+not_readmitted_time = pd.DataFrame(full_data_x['time_in_hospital'].as_matrix()[not_readmitted_indices[0]], columns=['Not Readmitted'])
 
-Lab_procedures = pd.concat([readmitted.num_lab_procedures, not_readmitted.num_lab_procedures], axis = 1)
-Lab_procedures.columns = ['Readmitted', 'Not-Readmitted']
-Lab_procedures.plot.hist(normed=True, alpha = 0.5)
+readmitted_proc_counts, bin_edges1 = np.histogram(readmitted_proc, range=(0,133))
+readmitted_proc_dist = pd.DataFrame(readmitted_proc_counts / np.sum(readmitted_proc_counts, dtype=float) * 100, columns=['Readmitted'], index=bin_edges1[1:])
+not_readmitted_proc_counts, bin_edges2 = np.histogram(not_readmitted_proc, range=(0,133))
+not_readmitted_proc_dist = pd.DataFrame(not_readmitted_proc_counts / np.sum(not_readmitted_proc_counts, dtype=float) * 100, columns=['Not Readmitted'], index=bin_edges1[1:])
+proc_dist = readmitted_proc_dist.copy()
+proc_dist['Not_Readmitted'] = not_readmitted_proc_dist
 
-Num_medications = pd.concat([readmitted.num_medications, not_readmitted.num_medications], axis = 1)
-Num_medications.columns = ['Readmitted', 'Not-Readmitted']
-Num_medications.plot.hist(normed=True, alpha = 0.5)
+readmitted_meds_counts, bin_edges1 = np.histogram(readmitted_meds, range=(0,82))
+readmitted_meds_dist = pd.DataFrame(readmitted_meds_counts / np.sum(readmitted_meds_counts, dtype=float) * 100, columns=['Readmitted'], index=bin_edges1[1:])
+not_readmitted_meds_counts, bin_edges2 = np.histogram(not_readmitted_meds, range=(0,82))
+not_readmitted_meds_dist = pd.DataFrame(not_readmitted_meds_counts / np.sum(not_readmitted_meds_counts, dtype=float) * 100, columns=['Not Readmitted'], index=bin_edges1[1:])
+meds_dist = readmitted_meds_dist.copy()
+meds_dist['Not_Readmitted'] = not_readmitted_meds_dist
 
-Hospital_time = pd.concat([readmitted.time_in_hospital, not_readmitted.time_in_hospital], axis = 1)
-Hospital_time.columns = ['Readmitted', 'Not-Readmitted']
-Hospital_time.plot.hist(normed=True, alpha = 0.5)
+readmitted_time_counts, bin_edges1 = np.histogram(readmitted_time, range=(0,15))
+readmitted_time_dist = pd.DataFrame(readmitted_time_counts / np.sum(readmitted_time_counts, dtype=float) * 100, columns=['Readmitted'], index=bin_edges1[1:])
+not_readmitted_time_counts, bin_edges2 = np.histogram(not_readmitted_time, range=(0,15))
+not_readmitted_time_dist = pd.DataFrame(not_readmitted_time_counts / np.sum(not_readmitted_time_counts, dtype=float) * 100, columns=['Not Readmitted'], index=bin_edges1[1:])
+time_dist = readmitted_time_dist.copy()
+time_dist['Not_Readmitted'] = not_readmitted_time_dist
+
+proc_dist.plot(kind='bar', title='Number of Lab Procedures for Readmitted and Not-Readmitted Patients')
+plt.xlabel('Num Lab Procedures')
+plt.ylabel('Percentage')
+plt.show()
+
+meds_dist.plot(kind='bar', title='Number of Medications for Readmitted and Not-Readmitted Patients')
+plt.xlabel('Num Medications')
+plt.ylabel('Percentage')
+plt.show()
+
+time_dist.plot(kind='bar', title='Time in Hospital for Readmitted and Not-Readmitted Patients')
+plt.xlabel('Time in Hospital (Days)')
+plt.ylabel('Percentage')
+plt.show()
 
 # Extract the features of most importance
 indices, importances, best_indices = random_forest_feature_importance(training_x, training_y)
@@ -335,8 +375,22 @@ verification_x = verification_x.drop(list(np.array(feature_list)[indices]), axis
 training_x = training_x.drop(list(np.array(feature_list)[indices]), axis=1)
 
 # do machine learning
+print '' 
+print '-------- Fitting Results --------'
+print ''
 log_model, lsq_model, ridge_model, lasso_model, knn_model, svc_model = ml_fit(training_x, training_y, verification_x, verification_y)
+
+print '' 
+print '-------- Prediction Results --------'
+print ''
 best_classifier = ml_predict(testing_x, testing_y, log_model, lsq_model, ridge_model, lasso_model ,knn_model, svc_model)
+
+print '' 
+print '-------- HBA1c Results --------'
+print ''
+# do machine learning on HBA1c 
+a1c_log_model, a1c_lsq_model, a1c_ridge_model, a1c_lasso_model, a1c_knn_model, a1c_svc_model = ml_fit(a1c_training_x.reshape(-1, 1), training_y, a1c_verification_x.reshape(-1, 1), verification_y)
+a1c_best_classifier = ml_predict(a1c_testing_x.reshape(-1, 1), testing_y, a1c_log_model, a1c_lsq_model, a1c_ridge_model, a1c_lasso_model , a1c_knn_model, a1c_svc_model, False)
 
 # Determine success of random classifier 
 random_y = np.random.randint(0, 2, size=len(testing_y))
@@ -355,8 +409,10 @@ print "Verification Set Distribution: Readmitted %.2f%% Not-Readmitted %.2f%%" %
 
 
 # TODO:  
-#        create plots/visuals of results
-#       show plots of top 10 features and relationships to prediction 
-#       compute confidence intervals
-#       cross validation? 
+#        Do learning on HBAC1 feature prediction (only HBAC1) <- Mallory
+#        Implement PCA for feature selection - make some sort of comparison to random forest features <- Jose
+#        Plots of readmitted/not-readmitted population percentages for histograms, percentages <- Mallory
+#        ROC curve (optional)
+
+
 
