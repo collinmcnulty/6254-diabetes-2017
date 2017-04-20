@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC, SVR
 from scipy.stats import threshold
+from sklearn.metrics import roc_curve, auc
 
 def clean_separate(datafile): 
     # Read in datafile, sort based on patient number, remove duplicate patient entries 
@@ -407,12 +408,49 @@ print "Testing Set Distribution: Readmitted %.2f%% Not-Readmitted %.2f%%" % (100
 print "Training Set Distribution: Readmitted %.2f%% Not-Readmitted %.2f%%" % (100 - non_readmitted_train, non_readmitted_train)
 print "Verification Set Distribution: Readmitted %.2f%% Not-Readmitted %.2f%%" % (100 - non_readmitted_verif, non_readmitted_verif)
 
+# ROC AUC Curve
+y_pred = log_model.predict(testing_x)
+y_score = log_model.decision_function(testing_x)
+fpr, tpr, _ = roc_curve(testing_y, y_score)
+roc_auc = auc(fpr, tpr)
+plt.figure()
+lw = 2
+plt.plot(fpr, tpr, color='darkorange',lw=lw, label='ROC curve (area = %0.2f)' % roc_auc)
+plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('ROC Curve for Diabetes Readmittance')
+plt.legend(loc="lower right")
+plt.show()
+
+# Compute TP/FP/TN/FN
+TP = np.sum(np.bool8(y_pred) & np.bool8(testing_y))
+FP = np.sum(np.bool8(y_pred) & ~np.bool8(testing_y))
+TN = np.sum(~np.bool8(y_pred) & ~np.bool8(testing_y))
+FN = np.sum(~np.bool8(y_pred) & np.bool8(testing_y))
+print("True Positives = %d" % TP)
+print("False Positives = %d" % FP)
+print("True Negatives = %d" % TN)
+print("False Negatives = %d" % FN)
+
+# Compute sensitivity, specificity, PPV, and NPV
+sensitivity = 100*TP/float(TP + FN)
+specificity = 100*TN/float(FP + TN)
+PPV = 100*TP/float(TP + FP)
+NPV = 100*TN/float(TN + FN)
+print "Sensitivity = %.2f%%" % sensitivity
+print "Specificity = %.2f%%" % specificity
+print "PPV = %.2f%%" % PPV
+print "NPV = %.2f%%" % NPV
 
 # TODO:  
-#        Do learning on HBAC1 feature prediction (only HBAC1) <- Mallory
-#        Implement PCA for feature selection - make some sort of comparison to random forest features <- Jose
-#        Plots of readmitted/not-readmitted population percentages for histograms, percentages <- Mallory
-#        ROC curve (optional)
-
+# TP/FP/TN/FN
+# TP = predicted as true and actually true 
+# FP = predicted as postive and actually false
+# FN = predicted as negative and actually positive 
+# TN = predicted as false and actually false
+# sensitivity and specificity
 
 
